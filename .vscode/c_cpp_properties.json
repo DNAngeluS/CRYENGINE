@@ -1,0 +1,23 @@
+{
+	"configurations": [
+		{
+			"name": "Linux",
+			"compilerPath": "/usr/bin/clang++",
+			"intelliSenseMode": "clang-x64",
+			"cStandard": "c11",
+			"cppStandard": "c++11",
+			"defines": [
+				"LINUX=TRUE",
+				"BUILD_PLATFORM=Linux64",
+				"BUILD_CPU_ARCHITECTURE=x64",
+				"OPTION_ENGINE=TRUE",
+				"RENDERER_VULKAN=ON",
+				"CRY_PLATFORM_WINDOWS=FALSE",
+				"CRY_PLATFORM_DURANGO=FALSE"
+			],
+			"compileCommands": "${workspaceFolder}/solutions_cmake/build_linux/compile_commands.json",
+			"configurationProvider": "ms-vscode.cpptools"
+		}
+	],
+	"version": 4
+}

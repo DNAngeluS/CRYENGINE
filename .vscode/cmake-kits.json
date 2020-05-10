@@ -1,0 +1,10 @@
+[
+	{
+		"name": "Unix Makefile",
+		"toolchainFile": "${workspaceRoot}/Tools/CMake/toolchain/linux/Linux_Clang.cmake"
+	},
+	{
+		"name": "Android",
+		"toolchainFile": "${workspaceRoot}/Tools/CMake/toolchain/android/Android_Clang.cmake"
+	}
+]

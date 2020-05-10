@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
 
 option(OPTION_BUILD_CSHARP_WITH_CSC "Build C# with Roslyn Compiler" ON)
-set(CSC_PATH "${SDK_DIR}/Mono/bin/csc.bat")
-set(MSBUILD_PATH "${SDK_DIR}/Mono/bin/msbuild.bat")
+if(WINDOWS)
+	set(CSC_PATH "${SDK_DIR}/Mono/bin/csc.bat")
+	set(MSBUILD_PATH "${SDK_DIR}/Mono/bin/msbuild.bat")
+endif()
+if(LINUX)
+	set(CSC_PATH "${SDK_DIR}/Mono/bin/csc")
+	set(MSBUILD_PATH "${SDK_DIR}/Mono/bin/msbuild")
+endif()
 
 macro(create_mono_compiler_settings)
 	set(MONO_LANGUAGE_VERSION 7)
