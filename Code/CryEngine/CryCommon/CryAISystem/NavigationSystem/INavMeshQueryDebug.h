@@ -26,21 +26,18 @@ namespace MNM
 		//! Or just one batch execution from a CNavMeshQueryBatch query.
 		struct SBatchData
 		{
-			//! STriangleData stores required triangle data for debug purposes. Data has to be stored here to not rely on the NavMesh to ask for this data (passing the triangleId). 
-			//! NavMesh may be regenerated and Tiles/Triangles may change, invalidating ids and/or data. 
+			//! STriangleData stores required triangle data for debug purposes. Data has to be stored here to not rely on the NavMesh to ask for this data (passing the triangleId).
+			//! NavMesh may be regenerated and Tiles/Triangles may change, invalidating ids and/or data.
 			//! However, storing the data here allows us to debug and render it although the triangle ids may be invalid
 			struct STriangleData
 			{
 				const TriangleID triangleID;
-				const vector3_t  v0;
-				const vector3_t  v1;
-				const vector3_t  v2;
+				const vector3_t v0;
+				const vector3_t v1;
+				const vector3_t v2;
 
 				STriangleData(const TriangleID triangleID_, const vector3_t v0_, const vector3_t v1_, const vector3_t v2_)
-					: triangleID(triangleID_)
-					, v0(v0_)
-					, v1(v1_)
-					, v2(v2_)
+						: triangleID(triangleID_), v0(v0_), v1(v1_), v2(v2_)
 				{
 				}
 			};
@@ -49,19 +46,16 @@ namespace MNM
 			typedef DynArray<STriangleData> TriangleDataArray;
 
 			const NavMeshQueryDebugBatchId batchNumber;
-			const size_t                   batchSize;
-			const TriangleDataArray        triangleDataArray;
-			const float                    elapsedTimeInMs;
+			const size_t batchSize;
+			const TriangleDataArray triangleDataArray;
+			const float elapsedTimeInMs;
 
 			SBatchData(const NavMeshQueryDebugBatchId batchNumber_,
-				const size_t batchSize_,
-				const float elapsedTimeInMs_,
-				const INavMesh* pMesh,
-				const TriangleIDArray& triangleIDArray)
-				: batchNumber(batchNumber_)
-				, batchSize(batchSize_)
-				, elapsedTimeInMs(elapsedTimeInMs_)
-				, triangleDataArray(INavMeshQueryDebug::GetTriangleData(pMesh, triangleIDArray))
+								 const size_t batchSize_,
+								 const float elapsedTimeInMs_,
+								 const INavMesh *pMesh,
+								 const TriangleIDArray &triangleIDArray)
+					: batchNumber(batchNumber_), batchSize(batchSize_), elapsedTimeInMs(elapsedTimeInMs_), triangleDataArray(INavMeshQueryDebug::GetTriangleData(pMesh, triangleIDArray))
 			{
 			}
 
@@ -83,21 +77,20 @@ namespace MNM
 						}
 					}
 				}
-			}			
+			}
 		};
 
 		//! SBatchData stores the data provided when a NavMesh regeneration happen and that invalidates a INavMeshQuery.
 		struct SInvalidationData
 		{
-			const TileID                  tileId;
-			const MNM::Tile::STileData    tileData;
-			const EInvalidationType       invalidationType;
+			const TileID tileId;
+			const MNM::Tile::STileData tileData;
+			const EInvalidationType invalidationType;
 
 			SInvalidationData(const TileID tileId_, const MNM::Tile::STileData tileData_, const EInvalidationType invalidationType_)
-				: tileId(tileId_)
-				, tileData(tileData_)
-				, invalidationType(invalidationType_)
-			{}
+					: tileId(tileId_), tileData(tileData_), invalidationType(invalidationType_)
+			{
+			}
 
 			void DebugDraw() const
 			{
@@ -143,30 +136,29 @@ namespace MNM
 		//! SQueryDebugData stores all required information to debug a INavMeshQuery (1:1 relationship)
 		struct SQueryDebugData
 		{
-			CTimeValue             timeAtStart;
-			size_t                 trianglesCount;
-			float                  elapsedTimeTotalInMs;
-			float                  elapsedTimeRunningInMs;
-			BatchDataArray         batchHistory;
-			InvalidationDataArray  invalidationsHistory;
+			CTimeValue timeAtStart;
+			size_t trianglesCount;
+			float elapsedTimeTotalInMs;
+			float elapsedTimeRunningInMs;
+			BatchDataArray batchHistory;
+			InvalidationDataArray invalidationsHistory;
 
 			SQueryDebugData()
-				: timeAtStart(0.f)
-				, trianglesCount(0)
-				, elapsedTimeTotalInMs(0.f)
-				, elapsedTimeRunningInMs(0.f)
-			{}
+					: timeAtStart(0.f), trianglesCount(0), elapsedTimeTotalInMs(0.f), elapsedTimeRunningInMs(0.f)
+			{
+			}
 		};
 
-		virtual const INavMeshQuery&   GetQuery() const = 0;
-		virtual const SQueryDebugData& GetDebugData() const = 0;
-		virtual bool                   AddBatchToHistory(const SBatchData& queryBatch) = 0;
-		virtual bool                   AddInvalidationToHistory(const SInvalidationData& queryInvalidation) = 0;
+		virtual const INavMeshQuery &GetQuery() const = 0;
+		virtual const SQueryDebugData &GetDebugData() const = 0;
+		virtual bool AddBatchToHistory(const SBatchData &queryBatch) = 0;
+		virtual bool AddInvalidationToHistory(const SInvalidationData &queryInvalidation) = 0;
+
 	protected:
 		~INavMeshQueryDebug() {}
 
 	private:
-		static void DebugDrawTriangle(const MNM::TriangleID triangleID, const MNM::vector3_t v0_, const MNM::vector3_t v1_, const MNM::vector3_t v2_, const ColorF& triangleFillColor)
+		static void DebugDrawTriangle(const MNM::TriangleID triangleID, const MNM::vector3_t v0_, const MNM::vector3_t v1_, const MNM::vector3_t v2_, const ColorF &triangleFillColor)
 		{
 			stack_string triangleIdText;
 			triangleIdText.Format("Id: %u", triangleID);
@@ -183,12 +175,12 @@ namespace MNM
 			triangleIdScope->AddTriangle(v0, v1, v2, triangleFillColor);
 
 			const ColorF textColor = Col_White;
-			const float  textSize = 1.25f;
+			const float textSize = 1.25f;
 
 			triangleIdScope->AddText((v0 + v1 + v2) / 3.f, textSize, textColor, "Id: %u", triangleID);
 		}
 
-		static bool GetVertices(const MNM::TileID tileId, const MNM::Tile::STileData& tileData, const MNM::TriangleID triangleId, MNM::vector3_t& v0, MNM::vector3_t& v1, MNM::vector3_t& v2)
+		static bool GetVertices(const MNM::TileID tileId, const MNM::Tile::STileData &tileData, const MNM::TriangleID triangleId, MNM::vector3_t &v0, MNM::vector3_t &v1, MNM::vector3_t &v2)
 		{
 			if (tileId.IsValid())
 			{
@@ -209,7 +201,7 @@ namespace MNM
 
 		//! Fill an array of STriangleData by asking the NavMesh with a TriangleId.
 		//! This function should only run while the TriangleIds are still valid, otherwise the behavior is undefined. For this reason it will run in the ctor, that is executed right after processing the NavMesh Triangles.
-		static MNM::INavMeshQueryDebug::SBatchData::TriangleDataArray GetTriangleData(const MNM::INavMesh* pMesh, const TriangleIDArray& triangleIDArray)
+		static MNM::INavMeshQueryDebug::SBatchData::TriangleDataArray GetTriangleData(const MNM::INavMesh *pMesh, const TriangleIDArray &triangleIDArray)
 		{
 			MNM::INavMeshQueryDebug::SBatchData::TriangleDataArray triangleDataArray;
 			if (!pMesh)
@@ -218,7 +210,7 @@ namespace MNM
 			}
 
 			triangleDataArray.reserve(triangleIDArray.size());
-			for (const MNM::TriangleID triangleId : triangleIDArray)
+			for (const MNM::TriangleID &triangleId : triangleIDArray)
 			{
 				MNM::vector3_t v0;
 				MNM::vector3_t v1;
@@ -240,5 +232,5 @@ namespace MNM
 			return triangleDataArray;
 		}
 	};
-}
+} // namespace MNM
 #endif // NAV_MESH_QUERY_DEBUG

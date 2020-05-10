@@ -36,18 +36,18 @@ inline uint hash(int key)
 
 inline uint VecHash(const Vec3 &vPos)
 {
-	uint x=*((unsigned *) & vPos.x)*73856093;
-	uint y=*((unsigned *) & vPos.y)*19349663;
-	uint z=*((unsigned *) & vPos.z)*83492791;
-	return (x^y^z);
+	uint x = *((unsigned *)&vPos.x) * 73856093;
+	uint y = *((unsigned *)&vPos.y) * 19349663;
+	uint z = *((unsigned *)&vPos.z) * 83492791;
+	return (x ^ y ^ z);
 }
 
 inline uint VecHash2(const Vec3 &vPos)
 {
-	uint x=(unsigned)(vPos.x*73856093);
-	uint y=(unsigned)(vPos.y*19349663);
-	uint z=(unsigned)(vPos.z*83492791);
-	return hash(x^hash(y^z));
+	uint x = *((unsigned *)&vPos.x) * 73856093;
+	uint y = *((unsigned *)&vPos.y) * 19349663;
+	uint z = *((unsigned *)&vPos.z) * 83492791;
+	return hash(x ^ hash(y ^ z));
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -56,10 +56,10 @@ class CWorldBuilder : public ILevelSystemListener
 public:
 	CWorldBuilder();
 	~CWorldBuilder();
-	
+
 	// ILevelSystemListener
-	virtual bool OnLoadingStart(ILevelInfo* pLevel) override;
-	virtual void OnLoadingComplete(ILevelInfo* pLevel) override;
+	virtual bool OnLoadingStart(ILevelInfo *pLevel) override;
+	virtual void OnLoadingComplete(ILevelInfo *pLevel) override;
 	// ~ILevelSystemListener
 
 	CryGame::CPrefabManager &GetPrefabManager() { return (m_PrefabManager); }
@@ -69,7 +69,6 @@ protected:
 	void DrawDebugInfo();
 
 	CryGame::CPrefabManager m_PrefabManager;
-
 };
 
 #endif // WorldBuilder

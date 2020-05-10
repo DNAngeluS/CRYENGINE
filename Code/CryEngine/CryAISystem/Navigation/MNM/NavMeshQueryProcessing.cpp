@@ -17,14 +17,13 @@ namespace MNM
 		return INavMeshQueryProcessing::EResult::Continue;
 	}
 
-
 	//====================================================================
 	// CNavMeshQueryProcessing
 	//====================================================================
 
 	bool CNavMeshQueryProcessing::UpdateNavMeshPointerBeforeProcessing()
 	{
-		const NavigationSystem* pNavigationSystem = gAIEnv.pNavigationSystem;
+		const NavigationSystem *pNavigationSystem = gAIEnv.pNavigationSystem;
 
 		IF_UNLIKELY(!pNavigationSystem)
 		{
@@ -54,7 +53,7 @@ namespace MNM
 
 		vector3_t a, b, c;
 
-		for (const TriangleID triangleId : m_triangleIdArray)
+		for (const TriangleID &triangleId : m_triangleIdArray)
 		{
 			m_pNavMesh->GetVertices(triangleId, a, b, c);
 
@@ -88,7 +87,7 @@ namespace MNM
 
 		vector3_t a, b, c;
 
-		for (const TriangleID triangleId : m_triangleIdArray)
+		for (const TriangleID &triangleId : m_triangleIdArray)
 		{
 			if (m_pNavMesh->GetVertices(triangleId, a, b, c))
 			{
@@ -119,10 +118,10 @@ namespace MNM
 			return INavMeshQueryProcessing::EResult::Stop;
 		}
 
-		for (const TriangleID triangleId : m_triangleIdArray)
+		for (const TriangleID &triangleId : m_triangleIdArray)
 		{
 			const TileID tileId = ComputeTileID(triangleId);
-			const STile& tile = m_pNavMesh->GetTile(tileId);
+			const STile &tile = m_pNavMesh->GetTile(tileId);
 
 			Tile::STriangle triangle;
 			m_pNavMesh->GetTriangle(triangleId, triangle);
@@ -130,12 +129,12 @@ namespace MNM
 			size_t linkedEdges = 0;
 			for (size_t l = 0; l < triangle.linkCount; ++l)
 			{
-				const Tile::SLink& link = tile.GetLinks()[triangle.firstLink + l];
+				const Tile::SLink &link = tile.GetLinks()[triangle.firstLink + l];
 				const size_t edge = link.edge;
 
 				if (link.side == Tile::SLink::Internal)
 				{
-					const AreaAnnotation* annotation = m_pNavMesh->GetTriangleAnnotation(ComputeTriangleID(tileId, link.triangle));
+					const AreaAnnotation *annotation = m_pNavMesh->GetTriangleAnnotation(ComputeTriangleID(tileId, link.triangle));
 					if (m_annotationFilter.PassFilter(*annotation))
 					{
 						linkedEdges |= static_cast<size_t>(1) << edge;
@@ -144,7 +143,7 @@ namespace MNM
 				else if (link.side != Tile::SLink::OffMesh)
 				{
 					TileID neighbourTileID = m_pNavMesh->GetNeighbourTileID(tileId, link.side);
-					const AreaAnnotation* annotation = m_pNavMesh->GetTriangleAnnotation(ComputeTriangleID(neighbourTileID, link.triangle));
+					const AreaAnnotation *annotation = m_pNavMesh->GetTriangleAnnotation(ComputeTriangleID(neighbourTileID, link.triangle));
 					if (m_annotationFilter.PassFilter(*annotation))
 					{
 						linkedEdges |= static_cast<size_t>(1) << edge;
@@ -193,7 +192,7 @@ namespace MNM
 
 		vector3_t a, b, c;
 
-		for (const TriangleID triangleId : m_triangleIdArray)
+		for (const TriangleID &triangleId : m_triangleIdArray)
 		{
 			m_pNavMesh->GetVertices(triangleId, a, b, c);
 
@@ -221,15 +220,14 @@ namespace MNM
 		}
 
 		vector3_t a, b, c;
-		for (const TriangleID triangleId : m_triangleIdArray)
+		for (const TriangleID &triangleId : m_triangleIdArray)
 		{
 			if (m_pNavMesh->GetVertices(triangleId, a, b, c))
 			{
 				m_triangleCenterArray.emplace_back(m_pNavMesh->ToWorldSpace((a + b + c) * real_t(0.33333f)).GetVec3());
 			}
-
 		}
 		m_triangleIdArray.clear();
 		return INavMeshQueryProcessing::EResult::Continue;
 	}
-}
+} // namespace MNM

@@ -14,7 +14,7 @@ struct SSchematycEntityClassProperties
 {
 	SSchematycEntityClassProperties() = default;
 
-	void Serialize(Serialization::IArchive& archive)
+	void Serialize(Serialization::IArchive &archive)
 	{
 		archive(Serialization::ObjectIconPath(icon), "icon", "Icon");
 		archive.doc("Icon");
@@ -26,23 +26,21 @@ struct SSchematycEntityClassProperties
 		archive.doc("Automatically spawns an instance of this class with each client that connects to the server");
 	}
 
-	static void ReflectType(Schematyc::CTypeDesc<SSchematycEntityClassProperties>& desc)
+	static void ReflectType(Schematyc::CTypeDesc<SSchematycEntityClassProperties> &desc)
 	{
 		desc.SetGUID("cb7311ea-9a07-490a-a351-25c298a91550"_cry_guid);
 	}
 
 	// class properties members
 	string icon = "%EDITOR%/objecticons/schematyc.bmp";
-	bool   bHideInEditor = false;
-	bool   bTriggerAreas = true;
-	bool   bCreatePerClient = false;
+	bool bHideInEditor = false;
+	bool bTriggerAreas = true;
+	bool bCreatePerClient = false;
 };
 
 //////////////////////////////////////////////////////////////////////////
 CEntityClassRegistry::CEntityClassRegistry()
-	: m_pDefaultClass(nullptr)
-	, m_listeners(2)
-	, m_pSystem(GetISystem())
+		: m_pDefaultClass(nullptr), m_listeners(2), m_pSystem(GetISystem())
 {
 }
 
@@ -56,18 +54,18 @@ CEntityClassRegistry::~CEntityClassRegistry()
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool CEntityClassRegistry::RegisterEntityClass(IEntityClass* pClass)
+bool CEntityClassRegistry::RegisterEntityClass(IEntityClass *pClass)
 {
 	assert(pClass != NULL);
 
 	bool newClass = false;
 	if ((pClass->GetFlags() & ECLF_MODIFY_EXISTING) == 0)
 	{
-		IEntityClass* pOldClass = FindClass(pClass->GetName());
+		IEntityClass *pOldClass = FindClass(pClass->GetName());
 		if (pOldClass)
 		{
 			EntityWarning("CEntityClassRegistry::RegisterEntityClass failed, class with name %s already registered",
-			              pOldClass->GetName());
+										pOldClass->GetName());
 			return false;
 		}
 		newClass = true;
@@ -85,7 +83,7 @@ bool CEntityClassRegistry::RegisterEntityClass(IEntityClass* pClass)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool CEntityClassRegistry::UnregisterEntityClass(IEntityClass* pClass)
+bool CEntityClassRegistry::UnregisterEntityClass(IEntityClass *pClass)
 {
 	assert(pClass != NULL);
 	if (FindClass(pClass->GetName()))
@@ -100,7 +98,7 @@ bool CEntityClassRegistry::UnregisterEntityClass(IEntityClass* pClass)
 }
 
 //////////////////////////////////////////////////////////////////////////
-IEntityClass* CEntityClassRegistry::FindClass(const char* sClassName) const
+IEntityClass *CEntityClassRegistry::FindClass(const char *sClassName) const
 {
 	ClassNameMap::const_iterator it = m_mapClassName.find(CONST_TEMP_STRING(sClassName));
 
@@ -111,7 +109,7 @@ IEntityClass* CEntityClassRegistry::FindClass(const char* sClassName) const
 }
 
 //////////////////////////////////////////////////////////////////////////
-IEntityClass* CEntityClassRegistry::FindClassByGUID(const CryGUID& guid) const
+IEntityClass *CEntityClassRegistry::FindClassByGUID(const CryGUID &guid) const
 {
 	auto it = m_mapClassGUIDs.find(guid);
 	if (it == m_mapClassGUIDs.end())
@@ -120,16 +118,16 @@ IEntityClass* CEntityClassRegistry::FindClassByGUID(const CryGUID& guid) const
 }
 
 //////////////////////////////////////////////////////////////////////////
-IEntityClass* CEntityClassRegistry::GetDefaultClass() const
+IEntityClass *CEntityClassRegistry::GetDefaultClass() const
 {
 	return m_pDefaultClass;
 }
 
 //////////////////////////////////////////////////////////////////////////
-IEntityClass* CEntityClassRegistry::RegisterStdClass(const SEntityClassDesc& entityClassDesc)
+IEntityClass *CEntityClassRegistry::RegisterStdClass(const SEntityClassDesc &entityClassDesc)
 {
 	// Creates a new entity class.
-	CEntityClass* pClass = new CEntityClass;
+	CEntityClass *pClass = new CEntityClass;
 
 	pClass->SetClassDesc(entityClassDesc);
 
@@ -137,7 +135,7 @@ IEntityClass* CEntityClassRegistry::RegisterStdClass(const SEntityClassDesc& ent
 	if (entityClassDesc.sScriptFile[0] || entityClassDesc.pScriptTable)
 	{
 		// Create a new entity script.
-		CEntityScript* pScript = new CEntityScript;
+		CEntityScript *pScript = new CEntityScript;
 		bool ok = false;
 		if (entityClassDesc.sScriptFile[0])
 			ok = pScript->Init(entityClassDesc.sName, entityClassDesc.sScriptFile);
@@ -165,9 +163,9 @@ IEntityClass* CEntityClassRegistry::RegisterStdClass(const SEntityClassDesc& ent
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool CEntityClassRegistry::UnregisterStdClass(const CryGUID& classGUID)
+bool CEntityClassRegistry::UnregisterStdClass(const CryGUID &classGUID)
 {
-	IEntityClass* pClass = FindClassByGUID(classGUID);
+	IEntityClass *pClass = FindClassByGUID(classGUID);
 	if (pClass)
 	{
 		return UnregisterEntityClass(pClass);
@@ -176,7 +174,7 @@ bool CEntityClassRegistry::UnregisterStdClass(const CryGUID& classGUID)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::RegisterListener(IEntityClassRegistryListener* pListener)
+void CEntityClassRegistry::RegisterListener(IEntityClassRegistryListener *pListener)
 {
 	if ((pListener != NULL) && (pListener->m_pRegistry == NULL))
 	{
@@ -186,7 +184,7 @@ void CEntityClassRegistry::RegisterListener(IEntityClassRegistryListener* pListe
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::UnregisterListener(IEntityClassRegistryListener* pListener)
+void CEntityClassRegistry::UnregisterListener(IEntityClassRegistryListener *pListener)
 {
 	if ((pListener != NULL) && (pListener->m_pRegistry == this))
 	{
@@ -202,9 +200,9 @@ void CEntityClassRegistry::IteratorMoveFirst()
 }
 
 //////////////////////////////////////////////////////////////////////////
-IEntityClass* CEntityClassRegistry::IteratorNext()
+IEntityClass *CEntityClassRegistry::IteratorNext()
 {
-	IEntityClass* pClass = NULL;
+	IEntityClass *pClass = NULL;
 	if (m_currentMapIterator != m_mapClassName.end())
 	{
 		pClass = m_currentMapIterator->second;
@@ -242,7 +240,7 @@ void CEntityClassRegistry::InitializeDefaultClasses()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::LoadClasses(const char* szFilename, bool bOnlyNewClasses)
+void CEntityClassRegistry::LoadClasses(const char *szFilename, bool bOnlyNewClasses)
 {
 	// Skip if file does not exist
 	if (!gEnv->pCryPak->IsFileExist(szFilename))
@@ -261,11 +259,11 @@ void CEntityClassRegistry::LoadClasses(const char* szFilename, bool bOnlyNewClas
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::LoadArchetypes(const char* libPath, bool reload)
+void CEntityClassRegistry::LoadArchetypes(const char *libPath, bool reload)
 {
 	if (reload)
 	{
-		std::vector<IEntityClass*> archetypeClasses;
+		std::vector<IEntityClass *> archetypeClasses;
 		archetypeClasses.reserve(m_mapClassName.size());
 
 		ClassNameMap::const_iterator it = m_mapClassName.begin();
@@ -278,13 +276,13 @@ void CEntityClassRegistry::LoadArchetypes(const char* libPath, bool reload)
 			}
 		}
 
-		for (IEntityClass* pArchetype : archetypeClasses)
+		for (IEntityClass *pArchetype : archetypeClasses)
 		{
 			UnregisterEntityClass(pArchetype);
 		}
 	}
 
-	ICryPak* pCryPak = gEnv->pCryPak;
+	ICryPak *pCryPak = gEnv->pCryPak;
 	_finddata_t fd;
 
 	string sPath = libPath;
@@ -311,14 +309,13 @@ void CEntityClassRegistry::LoadArchetypes(const char* libPath, bool reload)
 			}
 
 			res = pCryPak->FindNext(handle, &fd);
-		}
-		while (res >= 0);
+		} while (res >= 0);
 		pCryPak->FindClose(handle);
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::LoadArchetypeDescription(const XmlNodeRef& root)
+void CEntityClassRegistry::LoadArchetypeDescription(const XmlNodeRef &root)
 {
 	for (int i = 0, childCount = root->getChildCount(); i < childCount; ++i)
 	{
@@ -334,7 +331,7 @@ void CEntityClassRegistry::LoadArchetypeDescription(const XmlNodeRef& root)
 
 			string fullName = lib + "." + name;
 
-			IEntityClass* pClass = FindClass(fullName.c_str());
+			IEntityClass *pClass = FindClass(fullName.c_str());
 			if (!pClass)
 			{
 				SEntityClassDesc cd;
@@ -347,18 +344,18 @@ void CEntityClassRegistry::LoadArchetypeDescription(const XmlNodeRef& root)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::LoadClassDescription(const XmlNodeRef& root, bool bOnlyNewClasses)
+void CEntityClassRegistry::LoadClassDescription(const XmlNodeRef &root, bool bOnlyNewClasses)
 {
-	assert(root != (IXmlNode*)NULL);
+	assert(root != (IXmlNode *)NULL);
 	if (root->isTag("Entity"))
 	{
-		const char* sName = root->getAttr("Name");
+		const char *sName = root->getAttr("Name");
 		if (*sName == 0)
 			return; // Empty name.
 
-		const char* sScript = root->getAttr("Script");
+		const char *sScript = root->getAttr("Script");
 
-		IEntityClass* pClass = FindClass(sName);
+		IEntityClass *pClass = FindClass(sName);
 		if (!pClass)
 		{
 			// New class.
@@ -395,7 +392,7 @@ void CEntityClassRegistry::LoadClassDescription(const XmlNodeRef& root, bool bOn
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::NotifyListeners(EEntityClassRegistryEvent event, const IEntityClass* pEntityClass)
+void CEntityClassRegistry::NotifyListeners(EEntityClassRegistryEvent event, const IEntityClass *pEntityClass)
 {
 	CRY_ASSERT(m_listeners.IsNotifying() == false);
 	for (TListenerSet::Notifier notifier(m_listeners); notifier.IsValid(); notifier.Next())
@@ -412,13 +409,12 @@ public:
 	}
 
 	//~IObjectPreviewer
-	virtual void SerializeProperties(Serialization::IArchive& archive) override
+	virtual void SerializeProperties(Serialization::IArchive &archive) override
 	{
-		Schematyc::IObject* pObject = gEnv->pSchematyc->GetObject(m_objectId);
+		Schematyc::IObject *pObject = gEnv->pSchematyc->GetObject(m_objectId);
 		if (pObject && pObject->GetEntity())
 		{
-			auto visitor = [&](IEntityComponent* pComponent)
-			{
+			auto visitor = [&](IEntityComponent *pComponent) {
 				if (pComponent->GetPreviewer())
 				{
 					pComponent->GetPreviewer()->SerializeProperties(archive);
@@ -428,9 +424,9 @@ public:
 		}
 	};
 
-	virtual Schematyc::ObjectId CreateObject(const CryGUID& classGUID) const override
+	virtual Schematyc::ObjectId CreateObject(const CryGUID &classGUID) const override
 	{
-		IEntityClass* pEntityClass = g_pIEntitySystem->GetClassRegistry()->FindClassByGUID(classGUID);
+		IEntityClass *pEntityClass = g_pIEntitySystem->GetClassRegistry()->FindClassByGUID(classGUID);
 		if (pEntityClass)
 		{
 			// Spawn entity for preview
@@ -438,7 +434,7 @@ public:
 			params.pClass = pEntityClass;
 			params.sName = "Schematyc Preview Entity";
 			params.nFlagsExtended |= ENTITY_FLAG_EXTENDED_PREVIEW;
-			CEntity* pEntity = static_cast<CEntity*>(g_pIEntitySystem->SpawnEntity(params));
+			CEntity *pEntity = static_cast<CEntity *>(g_pIEntitySystem->SpawnEntity(params));
 			if (pEntity && pEntity->GetSchematycObject())
 			{
 				m_objectId = pEntity->GetSchematycObject()->GetId();
@@ -449,7 +445,7 @@ public:
 
 	virtual Schematyc::ObjectId ResetObject(Schematyc::ObjectId objectId) const override
 	{
-		Schematyc::IObject* pObject = gEnv->pSchematyc->GetObject(objectId);
+		Schematyc::IObject *pObject = gEnv->pSchematyc->GetObject(objectId);
 		if (pObject)
 		{
 			if (!pObject->SetSimulationMode(Schematyc::ESimulationMode::Preview, Schematyc::EObjectSimulationUpdatePolicy::Always))
@@ -464,7 +460,7 @@ public:
 
 	virtual void DestroyObject(Schematyc::ObjectId objectId) const override
 	{
-		Schematyc::IObject* pObject = gEnv->pSchematyc->GetObject(objectId);
+		Schematyc::IObject *pObject = gEnv->pSchematyc->GetObject(objectId);
 		if (!pObject)
 			return;
 		if (pObject->GetEntity())
@@ -476,7 +472,7 @@ public:
 
 	virtual Sphere GetObjectBounds(Schematyc::ObjectId objectId) const override
 	{
-		Schematyc::IObject* pObject = gEnv->pSchematyc->GetObject(objectId);
+		Schematyc::IObject *pObject = gEnv->pSchematyc->GetObject(objectId);
 		if (pObject && pObject->GetEntity())
 		{
 			AABB bbox;
@@ -486,9 +482,9 @@ public:
 		return Sphere(Vec3(0, 0, 0), 1.f);
 	};
 
-	virtual void RenderObject(const Schematyc::IObject& object, const SRendParams& params, const SRenderingPassInfo& passInfo) const override
+	virtual void RenderObject(const Schematyc::IObject &object, const SRendParams &params, const SRenderingPassInfo &passInfo) const override
 	{
-		CEntity* pEntity = static_cast<CEntity*>(object.GetEntity());
+		CEntity *pEntity = static_cast<CEntity *>(object.GetEntity());
 		if (pEntity)
 		{
 			SGeometryDebugDrawInfo debugDrawInfo;
@@ -513,8 +509,7 @@ void CEntityClassRegistry::RegisterSchematycEntityClass()
 	if (!gEnv->pSchematyc)
 		return;
 
-	auto staticAutoRegisterLambda = [](Schematyc::IEnvRegistrar& registrar)
-	{
+	auto staticAutoRegisterLambda = [](Schematyc::IEnvRegistrar &registrar) {
 		registrar.RootScope().Register(SCHEMATYC_MAKE_ENV_MODULE(EntityModuleGUID, "EntitySystem"));
 
 		Schematyc::CEnvRegistrationScope scope = registrar.Scope(EntityModuleGUID);
@@ -529,23 +524,21 @@ void CEntityClassRegistry::RegisterSchematycEntityClass()
 	};
 
 	gEnv->pSchematyc->GetEnvRegistry().RegisterPackage(
-	  stl::make_unique<Schematyc::CEnvPackage>(
-	    EntityPackageGUID,
-	    "EntitySystem",
-	    "Crytek GmbH",
-	    "CRYENGINE EntitySystem Package",
-	    staticAutoRegisterLambda
-	    )
-	  );
+			stl::make_unique<Schematyc::CEnvPackage>(
+					EntityPackageGUID,
+					"EntitySystem",
+					"Crytek GmbH",
+					"CRYENGINE EntitySystem Package",
+					staticAutoRegisterLambda));
 
 	// TODO : Can we filter by class guid?
 	gEnv->pSchematyc->GetCompiler().GetClassCompilationSignalSlots().Connect(
-	  [this](const Schematyc::IRuntimeClass& runtimeClass) { this->OnSchematycClassCompilation(runtimeClass); },
-	  m_connectionScope);
+			[this](const Schematyc::IRuntimeClass &runtimeClass) { this->OnSchematycClassCompilation(runtimeClass); },
+			m_connectionScope);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CEntityClassRegistry::OnSchematycClassCompilation(const Schematyc::IRuntimeClass& runtimeClass)
+void CEntityClassRegistry::OnSchematycClassCompilation(const Schematyc::IRuntimeClass &runtimeClass)
 {
 	if (runtimeClass.GetEnvClassGUID() == IEntity::GetEntityScopeGUID())
 	{
@@ -555,7 +548,7 @@ void CEntityClassRegistry::OnSchematycClassCompilation(const Schematyc::IRuntime
 
 		className.MakeLower();
 
-		IEntityClass* pEntityClass = g_pIEntitySystem->GetClassRegistry()->FindClass(className);
+		IEntityClass *pEntityClass = g_pIEntitySystem->GetClassRegistry()->FindClass(className);
 		if (pEntityClass)
 		{
 			if (pEntityClass->GetGUID() != runtimeClass.GetGUID())
@@ -569,7 +562,7 @@ void CEntityClassRegistry::OnSchematycClassCompilation(const Schematyc::IRuntime
 		SCHEMATYC_ENV_ASSERT(pEnvClassProperties);
 		if (pEnvClassProperties)
 		{
-			const SSchematycEntityClassProperties& classProperties = Schematyc::DynamicCast<SSchematycEntityClassProperties>(*pEnvClassProperties);
+			const SSchematycEntityClassProperties &classProperties = Schematyc::DynamicCast<SSchematycEntityClassProperties>(*pEnvClassProperties);
 
 			IEntityClassRegistry::SEntityClassDesc entityClassDesc;
 
@@ -604,7 +597,7 @@ void CEntityClassRegistry::OnSchematycClassCompilation(const Schematyc::IRuntime
 		}
 	}
 
-	const Schematyc::IEnvClass* pEnvClass = gEnv->pSchematyc->GetEnvRegistry().GetClass(runtimeClass.GetEnvClassGUID());
+	const Schematyc::IEnvClass *pEnvClass = gEnv->pSchematyc->GetEnvRegistry().GetClass(runtimeClass.GetEnvClassGUID());
 	if (!pEnvClass)
 	{
 		//pEnvClass->SetPreviewer();
@@ -621,7 +614,7 @@ void CEntityClassRegistry::UnregisterSchematycEntityClass()
 
 bool CEntityClassRegistry::OnClientConnectionReceived(int channelId, bool bIsReset)
 {
-	for (const std::pair<string, IEntityClass*>& classPair : m_mapClassName)
+	for (const std::pair<const string, IEntityClass *> &classPair : m_mapClassName)
 	{
 		if ((classPair.second->GetFlags() & ECLF_CREATE_PER_CLIENT) != 0)
 		{
@@ -637,7 +630,7 @@ bool CEntityClassRegistry::OnClientConnectionReceived(int channelId, bool bIsRes
 				spawnParams.nFlags |= ENTITY_FLAG_LOCAL_PLAYER;
 			}
 
-			if (CEntity* pClientEntity = static_cast<CEntity*>(g_pIEntitySystem->SpawnEntity(spawnParams)))
+			if (CEntity *pClientEntity = static_cast<CEntity *>(g_pIEntitySystem->SpawnEntity(spawnParams)))
 			{
 				// Set the local player entity channel id, and bind it to the network so that it can support Multiplayer contexts
 				pClientEntity->GetNetEntity()->SetChannelId(channelId);
@@ -667,7 +660,7 @@ bool CEntityClassRegistry::OnClientReadyForGameplay(int channelId, bool bIsReset
 	{
 		for (EntityId entityId : m_channelEntityInstances[channelId])
 		{
-			if (CEntity* pClientEntity = g_pIEntitySystem->GetEntityFromID(entityId))
+			if (CEntity *pClientEntity = g_pIEntitySystem->GetEntityFromID(entityId))
 			{
 				pClientEntity->SetSimulationMode(EEntitySimulationMode::Game);
 			}
@@ -677,7 +670,7 @@ bool CEntityClassRegistry::OnClientReadyForGameplay(int channelId, bool bIsReset
 	return true;
 }
 
-void CEntityClassRegistry::OnClientDisconnected(int channelId, EDisconnectionCause cause, const char* description, bool bKeepClient)
+void CEntityClassRegistry::OnClientDisconnected(int channelId, EDisconnectionCause cause, const char *description, bool bKeepClient)
 {
 	if ((size_t)channelId < m_channelEntityInstances.size())
 	{

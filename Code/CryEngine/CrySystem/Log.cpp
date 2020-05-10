@@ -16,16 +16,16 @@
 #include <CrySystem/IConsole.h>
 #include <CrySystem/ISystem.h>
 #include <CrySystem/IStreamEngine.h>
-#include <CryNetwork/INetwork.h>  // EvenBalance - M. Quinn
+#include <CryNetwork/INetwork.h> // EvenBalance - M. Quinn
 #include "System.h"
-#include <CryString/CryPath.h>          // PathUtil::ReplaceExtension()
+#include <CryString/CryPath.h> // PathUtil::ReplaceExtension()
 #include <CryGame/IGameFramework.h>
 #include <CryString/UnicodeFunctions.h>
 #include <CryString/StringUtils.h>
 #include <CrySystem/ConsoleRegistration.h>
 
 #if CRY_PLATFORM_WINDOWS
-	#include <time.h>
+#include <time.h>
 #endif
 
 #if !defined(CRY_PLATFORM_ORBIS) && !defined(CRY_PLATFORM_ANDROID)
@@ -33,17 +33,17 @@
 #endif //!defined(CRY_PLATFORM_ORBIS) && !defined(CRY_PLATFORM_ANDROID)
 
 #if CRY_PLATFORM_LINUX || CRY_PLATFORM_ANDROID || CRY_PLATFORM_APPLE
-	#include <syslog.h>
+#include <syslog.h>
 #endif
 
 #if CRY_PLATFORM_IOS
-	#include "SystemUtilsApple.h"
+#include "SystemUtilsApple.h"
 #endif
 
-#define LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE (uint32)BIT(31) // sets last bit to indicate readers must wait on writer
+#define LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE (uint32) BIT(31) // sets last bit to indicate readers must wait on writer
 
 //////////////////////////////////////////////////////////////////////////
-ILINE void LockNoneExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
+ILINE void LockNoneExclusiveAccess(SExclusiveThreadAccessLock *pExclusiveLock)
 {
 	const threadID nCurrentThreadId = CryGetCurrentThreadId();
 
@@ -63,18 +63,17 @@ ILINE void LockNoneExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
 			CrySleep(0);
 		}
 
-	}
-	while (CryInterlockedCompareExchange(alias_cast<volatile LONG*>(&pExclusiveLock->counter), nCurCount + 1, nCurCount) != nCurCount);
+	} while (CryInterlockedCompareExchange(alias_cast<volatile LONG *>(&pExclusiveLock->counter), nCurCount + 1, nCurCount) != nCurCount);
 }
 
 //////////////////////////////////////////////////////////////////////////
-ILINE void UnlockNoneExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
+ILINE void UnlockNoneExclusiveAccess(SExclusiveThreadAccessLock *pExclusiveLock)
 {
-	CryInterlockedDecrement(alias_cast<volatile int*>(&pExclusiveLock->counter));
+	CryInterlockedDecrement(alias_cast<volatile int *>(&pExclusiveLock->counter));
 }
 
 //////////////////////////////////////////////////////////////////////////
-ILINE void LockExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
+ILINE void LockExclusiveAccess(SExclusiveThreadAccessLock *pExclusiveLock)
 {
 	const threadID nCurrentThreadId = static_cast<threadID>(CryGetCurrentThreadId());
 	volatile uint32 nCurCount = 0;
@@ -89,8 +88,7 @@ ILINE void LockExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
 	{
 		nCurCount = pExclusiveLock->counter;
 		nCurCountNoLock = nCurCount & (~LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE);
-	}
-	while (CryInterlockedCompareExchange(alias_cast<volatile LONG*>(&pExclusiveLock->counter), (nCurCount | LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE), nCurCountNoLock) != nCurCountNoLock);
+	} while (CryInterlockedCompareExchange(alias_cast<volatile LONG *>(&pExclusiveLock->counter), (nCurCount | LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE), nCurCountNoLock) != nCurCountNoLock);
 
 	pExclusiveLock->writerThreadId = nCurrentThreadId;
 
@@ -101,7 +99,7 @@ ILINE void LockExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
 }
 
 //////////////////////////////////////////////////////////////////////////
-ILINE void UnlockExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
+ILINE void UnlockExclusiveAccess(SExclusiveThreadAccessLock *pExclusiveLock)
 {
 	pExclusiveLock->writerThreadId = THREADID_NULL;
 
@@ -109,13 +107,12 @@ ILINE void UnlockExclusiveAccess(SExclusiveThreadAccessLock* pExclusiveLock)
 	do // Release writer lock
 	{
 		nCurCount = pExclusiveLock->counter;
-	}
-	while (CryInterlockedCompareExchange(alias_cast<volatile LONG*>(&pExclusiveLock->counter), (nCurCount & (~LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE)), nCurCount) != nCurCount);
+	} while (CryInterlockedCompareExchange(alias_cast<volatile LONG *>(&pExclusiveLock->counter), (nCurCount & (~LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE)), nCurCount) != nCurCount);
 }
 
 #undef LOG_EXCLUSIVE_ACCESS_SINGLE_WRITER_LOCK_VALUE
 //////////////////////////////////////////////////////////////////////
-ILINE void CryOutputDebugString(const string& str)
+ILINE void CryOutputDebugString(const string &str)
 {
 	// Note: OutputDebugStringW will not actually output Unicode unless the attached debugger has explicitly opted in to this behavior.
 	// This is only possible on Windows 10; on older operating systems the W variant internally converts the input to the local codepage (ANSI) and calls the A variant.
@@ -132,15 +129,15 @@ namespace LogCVars
 {
 	float s_log_tick = 0;
 	int s_log_UseLogThread = 0;
-};
+}; // namespace LogCVars
 
 #ifndef _RELEASE
 static CLog::LogStringType indentString("    ");
 #endif
 
 //////////////////////////////////////////////////////////////////////
-CLogThread::CLogThread(concqueue::mpsc_queue_t<string>& logQueue)
-	: m_logQueue(logQueue)
+CLogThread::CLogThread(concqueue::mpsc_queue_t<string> &logQueue)
+		: m_logQueue(logQueue)
 {
 }
 
@@ -192,10 +189,8 @@ void CLogThread::ThreadEntry()
 }
 
 //////////////////////////////////////////////////////////////////////
-CLog::CLog(ISystem* pSystem)
-	: m_pSystem(pSystem)
-	, m_fLastLoadingUpdateTime(-1.0f)
-	, m_logFormat("%Y-%m-%dT%H:%M:%S:fffzzz")
+CLog::CLog(ISystem *pSystem)
+		: m_pSystem(pSystem), m_fLastLoadingUpdateTime(-1.0f), m_logFormat("%Y-%m-%dT%H:%M:%S:fffzzz")
 {
 	gEnv->pSystem->GetISystemEventDispatcher()->RegisterListener(this, "CLog");
 
@@ -205,49 +200,49 @@ CLog::CLog(ISystem* pSystem)
 
 void CLog::RegisterConsoleVariables()
 {
-	IConsole* console = m_pSystem->GetIConsole();
+	IConsole *console = m_pSystem->GetIConsole();
 
-#ifdef  _RELEASE
-	#if defined(RELEASE_LOGGING)
-		#define DEFAULT_VERBOSITY 0
-	#elif defined(DEDICATED_SERVER)
-		#define DEFAULT_VERBOSITY 0
-	#else
-		#define DEFAULT_VERBOSITY -1
-	#endif
+#ifdef _RELEASE
+#if defined(RELEASE_LOGGING)
+#define DEFAULT_VERBOSITY 0
+#elif defined(DEDICATED_SERVER)
+#define DEFAULT_VERBOSITY 0
 #else
-	#define DEFAULT_VERBOSITY 3
+#define DEFAULT_VERBOSITY -1
+#endif
+#else
+#define DEFAULT_VERBOSITY 3
 #endif
 
 #if defined(DEDICATED_SERVER) && defined(CRY_PLATFORM_LINUX)
-	#define DEFAULT_LOG_INCLUDE_TIME (0)
+#define DEFAULT_LOG_INCLUDE_TIME (0)
 #else
-	#define DEFAULT_LOG_INCLUDE_TIME (1)
+#define DEFAULT_LOG_INCLUDE_TIME (1)
 #endif
 
 	if (console)
 	{
 
 		m_pLogVerbosity = REGISTER_INT("log_Verbosity", DEFAULT_VERBOSITY, VF_DUMPTODISK,
-		                               "defines the verbosity level for log messages written to console\n"
-		                               "-1=suppress all logs (including eAlways)\n"
-		                               "0=suppress all logs(except eAlways)\n"
-		                               "1=additional errors\n"
-		                               "2=additional warnings\n"
-		                               "3=additional messages\n"
-		                               "4=additional comments");
+																	 "defines the verbosity level for log messages written to console\n"
+																	 "-1=suppress all logs (including eAlways)\n"
+																	 "0=suppress all logs(except eAlways)\n"
+																	 "1=additional errors\n"
+																	 "2=additional warnings\n"
+																	 "3=additional messages\n"
+																	 "4=additional comments");
 
 		//writing to game.log during game play causes stalls on consoles
 		m_pLogWriteToFile = REGISTER_INT("log_WriteToFile", 1, VF_DUMPTODISK, "toggle whether to write log to file (game.log)");
 
 		m_pLogWriteToFileVerbosity = REGISTER_INT("log_WriteToFileVerbosity", DEFAULT_VERBOSITY, VF_DUMPTODISK,
-		                                          "defines the verbosity level for log messages written to files\n"
-		                                          "-1=suppress all logs (including eAlways)\n"
-		                                          "0=suppress all logs(except eAlways)\n"
-		                                          "1=additional errors\n"
-		                                          "2=additional warnings\n"
-		                                          "3=additional messages\n"
-		                                          "4=additional comments");
+																							"defines the verbosity level for log messages written to files\n"
+																							"-1=suppress all logs (including eAlways)\n"
+																							"0=suppress all logs(except eAlways)\n"
+																							"1=additional errors\n"
+																							"2=additional warnings\n"
+																							"3=additional messages\n"
+																							"4=additional comments");
 		m_pLogVerbosityOverridesWriteToFile = REGISTER_INT("log_VerbosityOverridesWriteToFile", 1, VF_DUMPTODISK, "when enabled, setting log_verbosity to 0 will stop all logging including writing to file");
 
 #if CRY_PLATFORM_CONSOLE
@@ -256,21 +251,21 @@ void CLog::RegisterConsoleVariables()
 		const int defaultUseLogThreadVal = 0;
 #endif
 		m_pUseLogThread = REGISTER_CVAR3_CB("log_UseLogThread", LogCVars::s_log_UseLogThread, defaultUseLogThreadVal, VF_NULL,
-		                                    "When enabled, OutputDebugString will be done on a seperate thread to \n"
-			                                "reduce main thread time on platforms where logging is expensive", 
-		                                    OnUseLogThreadChange);
+																				"When enabled, OutputDebugString will be done on a seperate thread to \n"
+																				"reduce main thread time on platforms where logging is expensive",
+																				OnUseLogThreadChange);
 
 		// put time into begin of the string if requested by cvar
 		m_pLogIncludeTime = REGISTER_INT("log_IncludeTime", DEFAULT_LOG_INCLUDE_TIME, 0,
-		                                 "Toggles time stamping of log entries.\n"
-		                                 "Usage: log_IncludeTime [0/1/2/3/4/5]\n"
-		                                 "  0=off (default)\n"
-		                                 "  1=current time\n"
-		                                 "  2=relative time\n"
-		                                 "  3=current+relative time\n"
-		                                 "  4=absolute time in seconds since this mode was started\n"
-		                                 "  5=current time+server time\n"
-		                                 "  6=ISO8601 time formatting");
+																		 "Toggles time stamping of log entries.\n"
+																		 "Usage: log_IncludeTime [0/1/2/3/4/5]\n"
+																		 "  0=off (default)\n"
+																		 "  1=current time\n"
+																		 "  2=relative time\n"
+																		 "  3=current+relative time\n"
+																		 "  4=absolute time in seconds since this mode was started\n"
+																		 "  5=current time+server time\n"
+																		 "  6=ISO8601 time formatting");
 
 		m_pLogSpamDelay = REGISTER_FLOAT("log_SpamDelay", 0.0f, 0, "Sets the minimum time interval between messages classified as spam");
 
@@ -327,7 +322,7 @@ CLog::~CLog()
 #endif
 
 	if (gEnv->pSystem->GetISystemEventDispatcher())
-	  gEnv->pSystem->GetISystemEventDispatcher()->RemoveListener(this);
+		gEnv->pSystem->GetISystemEventDispatcher()->RemoveListener(this);
 
 	SAFE_DELETE(m_pLogThread);
 
@@ -366,9 +361,9 @@ void CLog::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_PTR lparam)
 }
 
 //////////////////////////////////////////////////////////////////////
-void CLog::OnUseLogThreadChange(ICVar* var)
+void CLog::OnUseLogThreadChange(ICVar *var)
 {
-	CLog* pCLog = static_cast<CLog*>(gEnv->pLog);
+	CLog *pCLog = static_cast<CLog *>(gEnv->pLog);
 	if (pCLog->m_bIsPostSystemInit && var->GetIVal())
 	{
 		pCLog->m_pLogThread->SignalStartWork();
@@ -392,7 +387,7 @@ void CLog::CloseLogFile(bool forceClose)
 }
 
 //////////////////////////////////////////////////////////////////////////
-FILE* CLog::OpenLogFile(const char* filename, const char* mode)
+FILE *CLog::OpenLogFile(const char *filename, const char *mode)
 {
 	SCOPED_ALLOW_FILE_ACCESS_FROM_THIS_THREAD();
 
@@ -443,7 +438,7 @@ void CLog::SetVerbosity(int verbosity)
 
 //////////////////////////////////////////////////////////////////////////
 #if !defined(EXCLUDE_NORMAL_LOG)
-void CLog::LogWarning(const char* szFormat, ...)
+void CLog::LogWarning(const char *szFormat, ...)
 {
 	va_list ArgList;
 	va_start(ArgList, szFormat);
@@ -452,7 +447,7 @@ void CLog::LogWarning(const char* szFormat, ...)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::LogError(const char* szFormat, ...)
+void CLog::LogError(const char *szFormat, ...)
 {
 	va_list ArgList;
 	va_start(ArgList, szFormat);
@@ -461,7 +456,7 @@ void CLog::LogError(const char* szFormat, ...)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::Log(const char* szFormat, ...)
+void CLog::Log(const char *szFormat, ...)
 {
 	va_list arg;
 	va_start(arg, szFormat);
@@ -470,7 +465,7 @@ void CLog::Log(const char* szFormat, ...)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::LogAlways(const char* szFormat, ...)
+void CLog::LogAlways(const char *szFormat, ...)
 {
 	va_list arg;
 	va_start(arg, szFormat);
@@ -479,9 +474,9 @@ void CLog::LogAlways(const char* szFormat, ...)
 }
 #endif // !defined(EXCLUDE_NORMAL_LOG)
 
-int MatchStrings(const char* str0, const char* str1)
+int MatchStrings(const char *str0, const char *str1)
 {
-	const char* str[] = { str0, str1 };
+	const char *str[] = {str0, str1};
 	int i, bSkipWord, bAlpha[2], bWS[2], bStop = 0, nDiffs = 0, nWordDiffs, len = 0;
 	do
 	{
@@ -501,31 +496,28 @@ int MatchStrings(const char* str0, const char* str1)
 						bAlpha[i] = inrange(chr, 'A' - 1, 'Z' + 1) | inrange(chr, 'a' - 1, 'z' + 1);
 						bWS[i] = iszero(chr - ' ');
 						bStop |= iszero(chr);
-					}
-					while (!(bAlpha[i] | bWS[i] | bStop));
+					} while (!(bAlpha[i] | bWS[i] | bStop));
 			// wait for a letter or a space in each input string
 			if (!bStop)
 			{
 				len += bAlpha[0] & bAlpha[1];
 				nWordDiffs += 1 - iszero((int)(*str[0] - *str[1])) & -(bAlpha[0] & bAlpha[1]); // count diffs in this word
 			}
-		}
-		while ((1 - bWS[0] | 1 - bWS[1]) & 1 - bStop); // wait for space (word end) in both strings
+		} while ((1 - bWS[0] | 1 - bWS[1]) & 1 - bStop); // wait for space (word end) in both strings
 		nDiffs += nWordDiffs & ~-bSkipWord;
-	}
-	while (!bStop);
+	} while (!bStop);
 break2:
 	return nDiffs * 10 < len;
 }
 
 //will log the text both to file and console
 //////////////////////////////////////////////////////////////////////
-void CLog::LogV(const ELogType type, const char* szFormat, va_list args)
+void CLog::LogV(const ELogType type, const char *szFormat, va_list args)
 {
 	LogV(type, 0, szFormat, args);
 }
 
-void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list args)
+void CLog::LogV(const ELogType type, int flags, const char *szFormat, va_list args)
 {
 	if (!szFormat)
 		return;
@@ -541,7 +533,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 	CRY_PROFILE_FUNCTION(PROFILE_SYSTEM);
 
 	bool bfile = false, bconsole = false;
-	const char* szCommand = szFormat;
+	const char *szCommand = szFormat;
 
 	uint8 DefaultVerbosity = 0; // 0 == Always log (except for special -1 verbosity overrides)
 
@@ -580,7 +572,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 
 	bool bError = false;
 
-	const char* szPrefix = nullptr;
+	const char *szPrefix = nullptr;
 	switch (type)
 	{
 	case eWarning:
@@ -619,7 +611,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 
 	if (type == eWarningAlways || type == eWarning || type == eError || type == eErrorAlways)
 	{
-		const char* sAssetScope = GetAssetScopeString();
+		const char *sAssetScope = GetAssetScopeString();
 		if (*sAssetScope)
 		{
 			formatted += "\t<Scope> ";
@@ -628,7 +620,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 	}
 
 	float dt;
-	const char* szSpamCheck = *szFormat == '%' ? formatted.c_str() : szFormat;
+	const char *szSpamCheck = *szFormat == '%' ? formatted.c_str() : szFormat;
 	if (m_pLogSpamDelay && (dt = m_pLogSpamDelay->GetFVal()) > 0.0f && type != eAlways && type != eInputResponse)
 	{
 		const int sz = CRY_ARRAY_COUNT(m_history);
@@ -638,8 +630,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 		{
 			if (m_history[i].type != type)
 				continue;
-			if ((m_history[i].ptr == szSpamCheck && *(int*)m_history[i].str.c_str() == *(int*)szFormat)
-				|| MatchStrings(m_history[i].str, szSpamCheck))
+			if ((m_history[i].ptr == szSpamCheck && *(int *)m_history[i].str.c_str() == *(int *)szFormat) || MatchStrings(m_history[i].str, szSpamCheck))
 				return;
 		}
 		i = m_iLastHistoryItem = m_iLastHistoryItem + 1 & sz - 1;
@@ -650,7 +641,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 
 	if (bfile)
 	{
-		const char* szAfterColor = szPrefix ? formatted.c_str() + 2 : formatted.c_str();
+		const char *szAfterColor = szPrefix ? formatted.c_str() + 2 : formatted.c_str();
 		LogStringToFile(szAfterColor, false, bError);
 	}
 	if (bconsole)
@@ -689,7 +680,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 	//////////////////////////////////////////////////////////////////////////
 	if (type == eWarningAlways || type == eWarning || type == eError || type == eErrorAlways)
 	{
-		IValidator* pValidator = m_pSystem->GetIValidator();
+		IValidator *pValidator = m_pSystem->GetIValidator();
 		if (pValidator && (flags & VALIDATOR_FLAG_SKIP_VALIDATOR) == 0)
 		{
 			CryAutoCriticalSection scope_lock(m_logCriticalSection);
@@ -712,7 +703,7 @@ void CLog::LogV(const ELogType type, int flags, const char* szFormat, va_list ar
 //will log the text both to the end of file and console
 //////////////////////////////////////////////////////////////////////
 #if !defined(EXCLUDE_NORMAL_LOG)
-void CLog::LogPlus(const char* szFormat, ...)
+void CLog::LogPlus(const char *szFormat, ...)
 {
 	if (m_pLogVerbosity && m_pLogVerbosity->GetIVal() < 0)
 	{
@@ -731,7 +722,7 @@ void CLog::LogPlus(const char* szFormat, ...)
 		return;
 
 	bool bfile = false, bconsole = false;
-	const char* szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
+	const char *szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
 	if (!bfile && !bconsole)
 		return;
 
@@ -753,15 +744,15 @@ void CLog::LogPlus(const char* szFormat, ...)
 
 //log to console only
 //////////////////////////////////////////////////////////////////////
-void CLog::LogStringToConsole(const char* szString, bool bAdd)
+void CLog::LogStringToConsole(const char *szString, bool bAdd)
 {
 	// Do not write to console on application crash
 	if (m_eLogMode == eLogMode_AppCrash)
 		return;
 
-	#if defined(_RELEASE) && defined(EXCLUDE_NORMAL_LOG) // no console logging in release
+#if defined(_RELEASE) && defined(EXCLUDE_NORMAL_LOG) // no console logging in release
 	return;
-	#endif
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	if (CryGetCurrentThreadId() != m_nMainThreadId)
@@ -788,7 +779,7 @@ void CLog::LogStringToConsole(const char* szString, bool bAdd)
 		return;
 	}
 
-	IConsole* console = m_pSystem->GetIConsole();
+	IConsole *console = m_pSystem->GetIConsole();
 	if (!console)
 		return;
 
@@ -822,7 +813,7 @@ void CLog::LogStringToConsole(const char* szString, bool bAdd)
 
 //log to console only
 //////////////////////////////////////////////////////////////////////
-void CLog::LogToConsole(const char* szFormat, ...)
+void CLog::LogToConsole(const char *szFormat, ...)
 {
 	if (m_pLogVerbosity && m_pLogVerbosity->GetIVal() < 0)
 	{
@@ -835,7 +826,7 @@ void CLog::LogToConsole(const char* szFormat, ...)
 	}
 
 	bool bfile = false, bconsole = false;
-	const char* szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
+	const char *szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
 	if (!bconsole)
 	{
 		return;
@@ -851,7 +842,7 @@ void CLog::LogToConsole(const char* szFormat, ...)
 }
 
 //////////////////////////////////////////////////////////////////////
-void CLog::LogToConsolePlus(const char* szFormat, ...)
+void CLog::LogToConsolePlus(const char *szFormat, ...)
 {
 	if (m_pLogVerbosity && m_pLogVerbosity->GetIVal() < 0)
 	{
@@ -864,7 +855,7 @@ void CLog::LogToConsolePlus(const char* szFormat, ...)
 	}
 
 	bool bfile = false, bconsole = false;
-	const char* szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
+	const char *szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
 	if (!bconsole)
 	{
 		return;
@@ -886,10 +877,10 @@ void CLog::LogToConsolePlus(const char* szFormat, ...)
 #endif // !defined(EXCLUDE_NORMAL_LOG)
 
 //////////////////////////////////////////////////////////////////////
-static void RemoveColorCodeInPlace(CLog::LogStringType& rStr)
+static void RemoveColorCodeInPlace(CLog::LogStringType &rStr)
 {
-	char* s = (char*)rStr.c_str();
-	char* d = s;
+	char *s = (char *)rStr.c_str();
+	char *d = s;
 
 	while (*s != 0)
 	{
@@ -919,7 +910,7 @@ void CLog::BuildIndentString()
 }
 
 //////////////////////////////////////////////////////////////////////
-void CLog::Indent(CLogIndenter* indenter)
+void CLog::Indent(CLogIndenter *indenter)
 {
 	indenter->SetNextIndenter(m_topIndenter);
 	m_topIndenter = indenter;
@@ -928,7 +919,7 @@ void CLog::Indent(CLogIndenter* indenter)
 }
 
 //////////////////////////////////////////////////////////////////////
-void CLog::Unindent(CLogIndenter* indenter)
+void CLog::Unindent(CLogIndenter *indenter)
 {
 	assert(indenter == m_topIndenter);
 	assert(m_indentation);
@@ -938,7 +929,7 @@ void CLog::Unindent(CLogIndenter* indenter)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::PushAssetScopeName(const char* sAssetType, const char* sName)
+void CLog::PushAssetScopeName(const char *sAssetType, const char *sName)
 {
 	assert(sAssetType);
 	assert(sName);
@@ -961,7 +952,7 @@ void CLog::PopAssetScopeName()
 }
 
 //////////////////////////////////////////////////////////////////////////
-const char* CLog::GetAssetScopeString()
+const char *CLog::GetAssetScopeString()
 {
 	CryAutoCriticalSection scope_lock(m_assetScopeQueueLock);
 
@@ -981,13 +972,13 @@ const char* CLog::GetAssetScopeString()
 };
 #endif
 
-void CLog::SetLogFormat(const char* format)
+void CLog::SetLogFormat(const char *format)
 {
 	m_logFormat.clear();
 	m_logFormat.assign(format);
 }
 
-void CLog::FormatTimestampInternal(stack_string& timeStr, const string& logFormat)
+void CLog::FormatTimestampInternal(stack_string &timeStr, const string &logFormat)
 {
 #if !defined(CRY_PLATFORM_ORBIS) && !defined(CRY_PLATFORM_ANDROID)
 	bool isUtC = logFormat.find("Z") != string::npos;
@@ -997,10 +988,13 @@ void CLog::FormatTimestampInternal(stack_string& timeStr, const string& logForma
 	stack_string formatStr;
 	struct timeb now;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	ftime(&now);
+#pragma clang diagnostic pop
 
 	time_t ltime = now.time;
-	struct tm* today = isUtC ? gmtime(&ltime) : localtime(&ltime);
+	struct tm *today = isUtC ? gmtime(&ltime) : localtime(&ltime);
 	strftime(sTime, 128, logFormat.c_str(), today);
 
 	timeStr.Format("%s", sTime);
@@ -1037,7 +1031,7 @@ void CLog::FormatTimestampInternal(stack_string& timeStr, const string& logForma
 
 //////////////////////////////////////////////////////////////////////
 #if !defined(EXCLUDE_NORMAL_LOG)
-void CLog::LogStringToFile(const char* szString, bool bAdd, bool bError)
+void CLog::LogStringToFile(const char *szString, bool bAdd, bool bError)
 {
 #if defined(_RELEASE) && defined(EXCLUDE_NORMAL_LOG) // no file logging in release
 	return;
@@ -1122,7 +1116,7 @@ void CLog::LogStringToFile(const char* szString, bool bAdd, bool bError)
 			{
 				time_t ltime;
 				time(&ltime);
-				struct tm* today = localtime(&ltime);
+				struct tm *today = localtime(&ltime);
 				strftime(sTime, CRY_ARRAY_COUNT(sTime), "<%H:%M:%S> ", today);
 				sTime[CRY_ARRAY_COUNT(sTime) - 1] = 0;
 				tempString.insert(0, sTime);
@@ -1217,7 +1211,7 @@ void CLog::LogStringToFile(const char* szString, bool bAdd, bool bError)
 #else
 		if (bAdd)
 		{
-			FILE* fp = OpenLogFile(m_filePath, "r+t");
+			FILE *fp = OpenLogFile(m_filePath, "r+t");
 			if (fp)
 			{
 				int nRes;
@@ -1234,7 +1228,7 @@ void CLog::LogStringToFile(const char* szString, bool bAdd, bool bError)
 		{
 			// comment on bug by TN: Log file misses the last lines of output
 			// Temporally forcing the Log to flush before closing the file, so all lines will show up
-			if (FILE* fp = OpenLogFile(m_filePath, "at")) // change to option "atc"
+			if (FILE *fp = OpenLogFile(m_filePath, "at")) // change to option "atc"
 			{
 				fputs(tempString.c_str(), fp);
 				// fflush(fp);  // enable to flush the file
@@ -1258,7 +1252,7 @@ void CLog::LogStringToFile(const char* szString, bool bAdd, bool bError)
 
 //same as above but to a file
 //////////////////////////////////////////////////////////////////////
-void CLog::LogToFilePlus(const char* szFormat, ...)
+void CLog::LogToFilePlus(const char *szFormat, ...)
 {
 	if (m_pLogVerbosity && m_pLogVerbosity->GetIVal() < 0)
 	{
@@ -1271,7 +1265,7 @@ void CLog::LogToFilePlus(const char* szFormat, ...)
 	}
 
 	bool bfile = false, bconsole = false;
-	const char* szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
+	const char *szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
 	if (!bfile)
 		return;
 
@@ -1286,7 +1280,7 @@ void CLog::LogToFilePlus(const char* szFormat, ...)
 
 //log to the file specified in setfilename
 //////////////////////////////////////////////////////////////////////
-void CLog::LogToFile(const char* szFormat, ...)
+void CLog::LogToFile(const char *szFormat, ...)
 {
 	if (m_pLogVerbosity && m_pLogVerbosity->GetIVal() < 0)
 	{
@@ -1299,7 +1293,7 @@ void CLog::LogToFile(const char* szFormat, ...)
 	}
 
 	bool bfile = false, bconsole = false;
-	const char* szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
+	const char *szCommand = CheckAgainstVerbosity(szFormat, bfile, bconsole);
 	if (!bfile)
 		return;
 
@@ -1325,7 +1319,7 @@ void CLog::CreateBackupFile()
 	}
 
 	LockNoneExclusiveAccess(&m_exclusiveLogFileThreadAccessLock);
-	FILE* src = fxopen(m_filePath, "rb");
+	FILE *src = fxopen(m_filePath, "rb");
 	UnlockNoneExclusiveAccess(&m_exclusiveLogFileThreadAccessLock);
 
 	// parse backup name attachment
@@ -1345,12 +1339,12 @@ void CLog::CreateBackupFile()
 					bKeyFound = true;
 					if (name.find("BackupNameAttachment=") == string::npos)
 					{
-	#if CRY_PLATFORM_WINDOWS
+#if CRY_PLATFORM_WINDOWS
 						OutputDebugString("Log::CreateBackupFile ERROR '");
 						OutputDebugString(name.c_str());
 						OutputDebugString("' not recognized \n");
-	#endif
-						assert(0);    // broken log file? - first line should include this name - written by LogVersion()
+#endif
+						assert(0); // broken log file? - first line should include this name - written by LogVersion()
 						return;
 					}
 					name.clear();
@@ -1392,8 +1386,7 @@ void CLog::CreateBackupFile()
 #if CRY_PLATFORM_DURANGO
 	// Xbox has some limitation in file names. No spaces in file name are allowed. The full path is limited by MAX_PATH, etc.
 	// I change spaces with underscores here for valid name and cut it if it exceed a limit.
-	auto processDurangoPath = [](const string& path)
-	{
+	auto processDurangoPath = [](const string &path) {
 		string durangoPath = PathUtil::ToDosPath(path);
 		durangoPath.replace(' ', '_');
 		CRY_ASSERT(durangoPath.size() <= MAX_PATH, "Log backup path is larger than MAX_PATH");
@@ -1411,7 +1404,7 @@ void CLog::CreateBackupFile()
 
 //set the file used to log to disk
 //////////////////////////////////////////////////////////////////////
-bool CLog::SetFileName(const char* szFileName)
+bool CLog::SetFileName(const char *szFileName)
 {
 	CRY_ASSERT(PathUtil::IsStrValid(szFileName));
 	if (!PathUtil::IsStrValid(szFileName))
@@ -1424,7 +1417,7 @@ bool CLog::SetFileName(const char* szFileName)
 
 	CreateBackupFile();
 
-	FILE* fp = OpenLogFile(m_filePath, "wt");
+	FILE *fp = OpenLogFile(m_filePath, "wt");
 	if (fp)
 	{
 		CloseLogFile(true);
@@ -1435,23 +1428,23 @@ bool CLog::SetFileName(const char* szFileName)
 }
 
 //////////////////////////////////////////////////////////////////////////
-const char* CLog::GetFileName() const
+const char *CLog::GetFileName() const
 {
 	return m_filename.c_str();
 }
 
-const char* CLog::GetFilePath() const
+const char *CLog::GetFilePath() const
 {
 	return m_filePath.c_str();
 }
 
-const char* CLog::GetBackupFilePath() const
+const char *CLog::GetBackupFilePath() const
 {
 	return m_backupFilePath.c_str();
 }
 
 //////////////////////////////////////////////////////////////////////
-void CLog::UpdateLoadingScreen(const char* szFormat, ...)
+void CLog::UpdateLoadingScreen(const char *szFormat, ...)
 {
 #if !defined(EXCLUDE_NORMAL_LOG)
 	if (szFormat)
@@ -1467,14 +1460,14 @@ void CLog::UpdateLoadingScreen(const char* szFormat, ...)
 
 	if (CryGetCurrentThreadId() == m_nMainThreadId)
 	{
-		((CSystem*)m_pSystem)->UpdateLoadingScreen();
+		((CSystem *)m_pSystem)->UpdateLoadingScreen();
 
 #if !(CRY_PLATFORM_LINUX || CRY_PLATFORM_ANDROID)
 		// Take this opportunity to update streaming engine.
-		if (IStreamEngine* pStreamEngine = GetISystem()->GetStreamEngine())
+		if (IStreamEngine *pStreamEngine = GetISystem()->GetStreamEngine())
 		{
 			const float curTime = m_pSystem->GetITimer()->GetAsyncCurTime();
-			if (curTime - m_fLastLoadingUpdateTime > .1f)  // not frequent than once in 100ms
+			if (curTime - m_fLastLoadingUpdateTime > .1f) // not frequent than once in 100ms
 			{
 				m_fLastLoadingUpdateTime = curTime;
 				pStreamEngine->Update();
@@ -1495,7 +1488,7 @@ int CLog::GetVerbosityLevel() const
 	return 0;
 }
 
-void CLog::GetMemoryUsage(ICrySizer* pSizer) const
+void CLog::GetMemoryUsage(ICrySizer *pSizer) const
 {
 	pSizer->AddObject(this, sizeof(*this));
 	pSizer->AddObject(m_pLogVerbosity);
@@ -1514,12 +1507,12 @@ void CLog::GetMemoryUsage(ICrySizer* pSizer) const
 //    the first verbosity character may be cut off)
 //    This is done in order to avoid modification of const char*, which may cause GPF
 //    sometimes, or kill the verbosity qualifier in the text that's gonna be passed next time.
-const char* CLog::CheckAgainstVerbosity(const char* pText, bool& logtofile, bool& logtoconsole, const uint8 DefaultVerbosity)
+const char *CLog::CheckAgainstVerbosity(const char *pText, bool &logtofile, bool &logtoconsole, const uint8 DefaultVerbosity)
 {
 	// the max verbosity (most detailed level)
 #if defined(RELEASE)
 	const unsigned char nMaxVerbosity = 0;
-#else // #if defined(RELEASE)
+#else	 // #if defined(RELEASE)
 	const unsigned char nMaxVerbosity = 8;
 #endif // #if defined(RELEASE)
 
@@ -1538,13 +1531,13 @@ const char* CLog::CheckAgainstVerbosity(const char* pText, bool& logtofile, bool
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::AddCallback(ILogCallback* pCallback)
+void CLog::AddCallback(ILogCallback *pCallback)
 {
 	stl::push_back_unique(m_callbacks, pCallback);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::RemoveCallback(ILogCallback* pCallback)
+void CLog::RemoveCallback(ILogCallback *pCallback)
 {
 	m_callbacks.remove(pCallback);
 }
@@ -1557,7 +1550,7 @@ void CLog::Update()
 	if (CryGetCurrentThreadId() == m_nMainThreadId)
 	{
 		auto messages = m_threadSafeMsgQueue.pop_all();
-		for (const SLogMsg& msg : messages)
+		for (const SLogMsg &msg : messages)
 		{
 			if (msg.bConsole)
 				LogStringToConsole(msg.msg, msg.bAdd);
@@ -1576,7 +1569,7 @@ void CLog::Update()
 				char sTime[128];
 				time_t ltime;
 				time(&ltime);
-				struct tm* today = localtime(&ltime);
+				struct tm *today = localtime(&ltime);
 				strftime(sTime, sizeof(sTime) - 1, "<%H:%M:%S> ", today);
 				LogAlways("<tick> %s", sTime);
 			}
@@ -1585,7 +1578,7 @@ void CLog::Update()
 }
 
 //////////////////////////////////////////////////////////////////////////
-const char* CLog::GetModuleFilter()
+const char *CLog::GetModuleFilter()
 {
 	if (m_pLogModule)
 	{
@@ -1617,7 +1610,7 @@ void CLog::FlushAndClose()
 }
 
 #if KEEP_LOG_FILE_OPEN
-void CLog::LogFlushFile(IConsoleCmdArgs* pArgs)
+void CLog::LogFlushFile(IConsoleCmdArgs *pArgs)
 {
 	gEnv->pLog->Flush();
 }
